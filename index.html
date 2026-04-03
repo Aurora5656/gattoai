@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="GattoAI"/>
+<meta name="theme-color" content="#ff6b35"/>
+<title>🐱 GattoAI — Il tuo gatto analizzato dall'AI</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #fff8f0;
+    --card: #ffffff;
+    --orange: #ff6b35;
+    --yellow: #ffd166;
+    --pink: #ff9eb5;
+    --purple: #c77dff;
+    --teal: #06d6a0;
+    --dark: #2d2d2d;
+    --shadow: 0 8px 40px rgba(255,107,53,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Nunito', sans-serif;
+    color: var(--dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Sfondo animato con pallini */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(255,107,53,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(199,125,255,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(255,209,102,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    text-align: center;
+    padding: 48px 20px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    color: var(--orange);
+    letter-spacing: 1px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .logo .paw { animation: bounce 1.5s ease-in-out infinite; }
+  .logo .paw:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-8px) rotate(5deg); }
+  }
+
+  header p {
+    margin-top: 10px;
+    font-size: 1.1rem;
+    color: #888;
+    font-weight: 600;
+  }
+
+  /* ---- API KEY BOX ---- */
+  .api-section {
+    max-width: 600px;
+    margin: 0 auto 20px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .api-box {
+    background: #fff3cd;
+    border: 2px dashed var(--yellow);
+    border-radius: 16px;
+    padding: 16px 20px;
+    font-size: 0.92rem;
+    color: #7a5c00;
+  }
+
+  .api-box strong { display: block; margin-bottom: 8px; font-size: 1rem; }
+
+  .api-box a { color: var(--orange); font-weight: 700; }
+
+  .api-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .api-input-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid var(--yellow);
+    border-radius: 10px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    outline: none;
+    background: white;
+  }
+
+  .api-input-row input:focus { border-color: var(--orange); }
+
+  .btn-save {
+    padding: 10px 18px;
+    background: var(--orange);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: transform 0.15s;
+  }
+
+  .btn-save:hover { transform: scale(1.05); }
+
+  /* ---- UPLOAD AREA ---- */
+  .main {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .upload-area {
+    background: var(--card);
+    border: 3px dashed #ffc299;
+    border-radius: 28px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-area:hover, .upload-area.drag-over {
+    border-color: var(--orange);
+    background: #fff4ee;
+    transform: translateY(-3px);
+    box-shadow: 0 16px 50px rgba(255,107,53,0.2);
+  }
+
+  .upload-icon {
+    font-size: 4rem;
+    margin-bottom: 12px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .upload-area h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: var(--orange);
+    margin-bottom: 6px;
+  }
+
+  .upload-area p { color: #aaa; font-size: 0.95rem; }
+
+  #fileInput { display: none; }
+
+  /* Preview immagine */
+  #preview {
+    display: none;
+    margin-top: 24px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    position: relative;
+  }
+
+  #preview img {
+    width: 100%;
+    max-height: 380px;
+    object-fit: cover;
+    display: block;
+  }
+
+  #preview .change-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+  }
+
+  /* ---- BOTTONE ANALIZZA ---- */
+  .analyze-btn {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--orange), #ff9a5c);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 24px rgba(255,107,53,0.35);
+    transition: all 0.2s;
+    display: none;
+  }
+
+  .analyze-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 36px rgba(255,107,53,0.45);
+  }
+
+  .analyze-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ---- LOADING ---- */
+  #loading {
+    display: none;
+    text-align: center;
+    padding: 32px;
+    margin-top: 24px;
+  }
+
+  .cat-loader {
+    font-size: 3rem;
+    display: inline-block;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  #loading p {
+    margin-top: 12px;
+    font-weight: 700;
+    color: var(--orange);
+    font-size: 1.05rem;
+  }
+
+  /* ---- RISULTATI ---- */
+  #results {
+    display: none;
+    margin-top: 28px;
+    animation: slideUp 0.5s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: var(--dark);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 500px) { .cards-grid { grid-template-columns: 1fr; } }
+
+  .info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    border-top: 4px solid var(--c, var(--orange));
+    transition: transform 0.2s;
+  }
+
+  .info-card:hover { transform: translateY(-3px); }
+
+  .info-card .icon { font-size: 1.8rem; margin-bottom: 8px; }
+
+  .info-card .label {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--c, var(--orange));
+    margin-bottom: 4px;
+  }
+
+  .info-card .value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1.3;
+  }
+
+  .thought-card {
+    background: linear-gradient(135deg, #fff8e1, #fff3cd);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    border-left: 5px solid var(--yellow);
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .thought-card::before {
+    content: '💭';
+    font-size: 1.5rem;
+    position: absolute;
+    top: -10px;
+    left: 20px;
+  }
+
+  .thought-card .label {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #b8860b;
+    margin-bottom: 8px;
+    margin-top: 8px;
+  }
+
+  .thought-card .value {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: #5c4a00;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .desc-card {
+    background: white;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    border-top: 4px solid var(--teal);
+  }
+
+  .desc-card .label {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--teal);
+    margin-bottom: 10px;
+  }
+
+  .desc-card .value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #444;
+    line-height: 1.6;
+  }
+
+  /* Barra umore */
+  .mood-bar-wrap { margin-top: 12px; }
+  .mood-label { font-size: 0.82rem; color: #aaa; font-weight: 700; margin-bottom: 4px; }
+  .mood-bar {
+    height: 12px;
+    background: #f0f0f0;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .mood-fill {
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, var(--yellow), var(--orange));
+    transition: width 1s ease;
+  }
+
+  /* Bottone riprova */
+  .retry-btn {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px;
+    background: white;
+    color: var(--orange);
+    border: 2.5px solid var(--orange);
+    border-radius: 16px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .retry-btn:hover { background: var(--orange); color: white; }
+
+  .error-box {
+    background: #fff0f0;
+    border: 2px solid #ffaaaa;
+    border-radius: 16px;
+    padding: 18px;
+    margin-top: 20px;
+    color: #c0392b;
+    font-weight: 600;
+    text-align: center;
+    display: none;
+  }
+
+  /* ---- MEME ---- */
+  .meme-section {
+    display: none;
+    margin-top: 20px;
+    background: linear-gradient(135deg, #f3e8ff, #ede0ff);
+    border-radius: 20px;
+    padding: 24px;
+    border: 2px solid #c77dff44;
+  }
+  .meme-header {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: var(--purple);
+    margin-bottom: 4px;
+  }
+  .meme-sub { color: #888; font-size: 0.92rem; margin-bottom: 16px; }
+  .meme-style-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .style-label { font-weight: 700; color: #555; font-size: 0.9rem; }
+  #memeStyle {
+    flex: 1; min-width: 200px; padding: 10px 14px;
+    border: 2px solid #c77dff; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 0.92rem;
+    background: white; cursor: pointer; outline: none;
+  }
+  .meme-btn {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--purple), #9b5de5);
+    color: white; border: none; border-radius: 16px;
+    font-family: 'Fredoka One', cursive; font-size: 1.3rem;
+    cursor: pointer; box-shadow: 0 6px 20px rgba(199,125,255,0.35);
+    transition: all 0.2s;
+  }
+  .meme-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(199,125,255,0.45); }
+  .meme-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .download-btn {
+    display: block; width: 100%; margin-top: 14px; padding: 14px;
+    background: white; color: var(--purple); border: 2.5px solid var(--purple);
+    border-radius: 14px; font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .download-btn:hover { background: var(--purple); color: white; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="paw">🐾</span>
+    GattoAI
+    <span class="paw">🐾</span>
+  </div>
+  <p>Scopri i segreti del tuo gatto con l'intelligenza artificiale!</p>
+</header>
+
+<!-- API KEY -->
+
+<!-- Banner installazione PWA -->
+<div id="installBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:999;
+  background:linear-gradient(135deg,#ff6b35,#ff9a5c); color:white; padding:14px 20px;
+  align-items:center; justify-content:space-between; gap:12px;
+  box-shadow:0 -4px 20px rgba(255,107,53,0.3); font-family:'Nunito',sans-serif;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:1.8rem">🐱</span>
+    <div>
+      <div style="font-weight:800;font-size:0.95rem">Aggiungi GattoAI alla Home!</div>
+      <div style="font-size:0.78rem;opacity:0.85">Usala come una vera app Android</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button onclick="document.getElementById('installBanner').style.display='none'"
+      style="padding:8px 14px;background:rgba(255,255,255,0.2);border:none;border-radius:10px;
+      color:white;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.85rem">
+      Dopo
+    </button>
+    <button onclick="installPWA()"
+      style="padding:8px 16px;background:white;border:none;border-radius:10px;
+      color:#ff6b35;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.85rem">
+      Installa!
+    </button>
+  </div>
+</div>
+
+<div class="api-section">
+  <div class="api-box">
+    <strong>🔑 Inserisci la tua API Key di Anthropic</strong>
+    Per usare l'app hai bisogno di una chiave API gratuita (con crediti di prova).<br>
+    Ottienila su <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → "API Keys"
+    <div class="api-input-row">
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." />
+      <button class="btn-save" onclick="saveKey()">Salva</button>
+    </div>
+    <div id="keyStatus" style="margin-top:8px;font-size:0.85rem;"></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- UPLOAD -->
+  <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()"
+       ondragover="event.preventDefault();this.classList.add('drag-over')"
+       ondragleave="this.classList.remove('drag-over')"
+       ondrop="handleDrop(event)">
+    <span class="upload-icon">🐱</span>
+    <h2>Carica la foto del tuo gatto!</h2>
+    <p>Clicca qui oppure trascina l'immagine</p>
+    <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this.files[0])"/>
+  </div>
+
+  <!-- PREVIEW -->
+  <div id="preview">
+    <img id="previewImg" src="" alt="Foto gatto"/>
+    <button class="change-btn" onclick="resetPhoto()">✏️ Cambia foto</button>
+  </div>
+
+  <!-- BOTTONE ANALIZZA -->
+  <button class="analyze-btn" id="analyzeBtn" onclick="analyzePhoto()">
+    🔍 Analizza il mio gatto!
+  </button>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <span class="cat-loader">🐾</span>
+    <p id="loadingText">L'AI sta studiando il tuo gatto...</p>
+  </div>
+
+  <!-- ERRORE -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RISULTATI -->
+  <div id="results">
+    <div class="result-header">🎉 Ecco il tuo gatto!</div>
+
+    <div class="cards-grid">
+      <div class="info-card" style="--c: #ff6b35">
+        <div class="icon">👑</div>
+        <div class="label">Nome Segreto</div>
+        <div class="value" id="res-nome">—</div>
+      </div>
+      <div class="info-card" style="--c: #c77dff">
+        <div class="icon">🎭</div>
+        <div class="label">Personalità</div>
+        <div class="value" id="res-personalita">—</div>
+      </div>
+      <div class="info-card" style="--c: #ff9eb5">
+        <div class="icon">🐈</div>
+        <div class="label">Razza stimata</div>
+        <div class="value" id="res-razza">—</div>
+      </div>
+      <div class="info-card" style="--c: #06d6a0">
+        <div class="icon">🎯</div>
+        <div class="label">Occupazione</div>
+        <div class="value" id="res-occupazione">—</div>
+      </div>
+    </div>
+
+    <div class="thought-card">
+      <div class="label">Cosa sta pensando ora...</div>
+      <div class="value" id="res-pensiero">—</div>
+    </div>
+
+    <div class="desc-card">
+      <div class="label">📝 Descrizione completa</div>
+      <div class="value" id="res-descrizione">—</div>
+      <div class="mood-bar-wrap">
+        <div class="mood-label">Livello di Felicità 😸</div>
+        <div class="mood-bar">
+          <div class="mood-fill" id="moodFill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="retry-btn" onclick="resetAll()">🔄 Analizza un altro gatto</button>
+
+    <!-- MEME SECTION -->
+    <div class="meme-section" id="memeSection">
+      <div class="meme-header">😂 Crea il Meme!</div>
+      <p class="meme-sub">L'AI inventa una frase comica e la mette sulla foto del tuo gatto</p>
+
+      <div class="meme-style-row">
+        <label class="style-label">Stile meme:</label>
+        <select id="memeStyle">
+          <option value="classico">😂 Classico (testo bianco sopra/sotto)</option>
+          <option value="motivazionale">💪 Motivazionale</option>
+          <option value="drammatico">🎭 Drammatico</option>
+          <option value="saggio">🧙 Gatto Saggio</option>
+          <option value="lamentele">😾 Lamentele felino</option>
+        </select>
+      </div>
+
+      <button class="meme-btn" id="memeBtn" onclick="generateMeme()">
+        🎨 Genera Meme!
+      </button>
+
+      <div id="memeLoading" style="display:none; text-align:center; padding:20px;">
+        <span style="font-size:2rem; display:inline-block; animation:spin 0.8s linear infinite">🐾</span>
+        <p style="color:var(--purple); font-weight:700; margin-top:8px;">Sto inventando qualcosa di geniale...</p>
+      </div>
+
+      <div id="memeResult" style="display:none;">
+        <canvas id="memeCanvas" style="width:100%; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.15); display:block;"></canvas>
+        <button class="download-btn" onclick="downloadMeme()">⬇️ Scarica il Meme!</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  let imageBase64 = null;
+  let apiKey = localStorage.getItem('gattoai_key') || '';
+
+  // Mostra chiave salvata
+  if (apiKey) {
+    document.getElementById('apiKeyInput').value = apiKey;
+    document.getElementById('keyStatus').innerHTML = '✅ <span style="color:#2e7d32">Chiave salvata!</span>';
+  }
+
+  function saveKey() {
+    const val = document.getElementById('apiKeyInput').value.trim();
+    if (!val.startsWith('sk-')) {
+      document.getElementById('keyStatus').innerHTML = '❌ <span style="color:#c0392b">La chiave non sembra valida</span>';
+      return;
+    }
+    apiKey = val;
+    localStorage.setItem('gattoai_key', val);
+    document.getElementById('keyStatus').innerHTML = '✅ <span style="color:#2e7d32">Chiave salvata!</span>';
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('uploadArea').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) handleFile(file);
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      imageBase64 = e.target.result.split(',')[1];
+      document.getElementById('previewImg').src = e.target.result;
+      document.getElementById('uploadArea').style.display = 'none';
+      document.getElementById('preview').style.display = 'block';
+      document.getElementById('analyzeBtn').style.display = 'block';
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('errorBox').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function resetPhoto() {
+    document.getElementById('uploadArea').style.display = 'block';
+    document.getElementById('preview').style.display = 'none';
+    document.getElementById('analyzeBtn').style.display = 'none';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+    imageBase64 = null;
+    document.getElementById('fileInput').value = '';
+  }
+
+  function resetAll() {
+    resetPhoto();
+  }
+
+  const loadingMessages = [
+    "L'AI sta studiando il tuo gatto... 🧐",
+    "Analisi del pelo in corso... 🔬",
+    "Lettura del pensiero felino... 🧠",
+    "Quasi pronto! Il gatto sta posando... 😼",
+  ];
+
+  async function analyzePhoto() {
+    if (!apiKey) {
+      alert('⚠️ Inserisci prima la tua API Key!');
+      return;
+    }
+    if (!imageBase64) return;
+
+    const btn = document.getElementById('analyzeBtn');
+    btn.disabled = true;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+
+    // Anima messaggi loading
+    let msgIdx = 0;
+    const msgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % loadingMessages.length;
+      document.getElementById('loadingText').textContent = loadingMessages[msgIdx];
+    }, 1800);
+
+    const prompt = `Guarda questa foto di un gatto e rispondimi SOLO con un oggetto JSON valido, senza markdown, senza backtick, senza testo aggiuntivo.
+
+Il JSON deve avere esattamente questi campi:
+{
+  "nome": "un nome segreto buffo e creativo per questo gatto",
+  "personalita": "2-3 aggettivi divertenti che descrivono la sua personalità",
+  "razza": "la razza stimata o tipo di gatto",
+  "occupazione": "la sua 'occupazione' immaginaria e comica (es: Guardiano del divano, CEO dei pisolini)",
+  "pensiero": "cosa sta pensando in questo momento, scritto in prima persona e in modo comico (max 2 frasi)",
+  "descrizione": "una descrizione divertente e affettuosa del gatto in 2-3 frasi",
+  "felicita": un numero da 0 a 100 che indica il livello di felicità del gatto
+}`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+
+      clearInterval(msgInterval);
+      document.getElementById('loading').style.display = 'none';
+      btn.disabled = false;
+
+      if (data.error) {
+        showError('Errore API: ' + data.error.message);
+        return;
+      }
+
+      const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+      let result;
+      try { result = JSON.parse(raw); }
+      catch(e) { showError('Risposta non valida dall\'AI. Riprova!'); return; }
+
+      // Mostra risultati
+      document.getElementById('res-nome').textContent = result.nome || '?';
+      document.getElementById('res-personalita').textContent = result.personalita || '?';
+      document.getElementById('res-razza').textContent = result.razza || '?';
+      document.getElementById('res-occupazione').textContent = result.occupazione || '?';
+      document.getElementById('res-pensiero').textContent = '"' + (result.pensiero || '?') + '"';
+      document.getElementById('res-descrizione').textContent = result.descrizione || '?';
+
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('memeSection').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('moodFill').style.width = (result.felicita || 70) + '%';
+      }, 300);
+
+    } catch(err) {
+      clearInterval(msgInterval);
+      document.getElementById('loading').style.display = 'none';
+      btn.disabled = false;
+      showError('Errore di rete. Controlla la connessione e riprova.');
+    }
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.textContent = '❌ ' + msg;
+    box.style.display = 'block';
+  }
+
+  async function generateMeme() {
+    if (!apiKey || !imageBase64) return;
+    const style = document.getElementById('memeStyle').value;
+    const btn = document.getElementById('memeBtn');
+    btn.disabled = true;
+    document.getElementById('memeLoading').style.display = 'block';
+    document.getElementById('memeResult').style.display = 'none';
+
+    const stylePrompts = {
+      'classico':       'una frase meme classica e esilarante in stile internet, breve e diretta (max 10 parole)',
+      'motivazionale':  'una frase motivazionale assurda e comica come se fosse scritta da un gatto, massimo 12 parole',
+      'drammatico':     'una frase drammatica e teatrale come se il gatto stesse affrontando una grande tragedia (es: la ciotola vuota)',
+      'saggio':         'una frase pseudo-filosofica e saggia in stile "antico maestro gatto", breve e buffa',
+      'lamentele':      'una lamentela tipica di un gatto viziato e annoiato, in prima persona, comica'
+    };
+
+    const prompt = `Guarda questa foto di un gatto. Inventa ${stylePrompts[style]}.
+Rispondimi SOLO con un oggetto JSON così:
+{"top": "testo sopra l'immagine (può essere vuoto)", "bottom": "testo sotto l'immagine"}
+Usa lettere maiuscole. Niente markdown, niente backtick, solo JSON puro.`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 200,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+      const data = await response.json();
+      document.getElementById('memeLoading').style.display = 'none';
+      btn.disabled = false;
+      if (data.error) { alert('Errore API: ' + data.error.message); return; }
+      const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+      let memeText;
+      try { memeText = JSON.parse(raw); } catch(e) { alert('Risposta non valida, riprova!'); return; }
+      drawMeme(memeText.top || '', memeText.bottom || '');
+    } catch(err) {
+      document.getElementById('memeLoading').style.display = 'none';
+      btn.disabled = false;
+      alert('Errore di rete, riprova!');
+    }
+  }
+
+  function drawMeme(topText, bottomText) {
+    const canvas = document.getElementById('memeCanvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = function() {
+      const TARGET_W = 680;
+      const ratio = img.height / img.width;
+      canvas.width  = TARGET_W;
+      canvas.height = Math.round(TARGET_W * ratio);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const PAD_X = W * 0.05;
+      const MAX_TEXT_W = W - PAD_X * 2;
+
+      function wrapText(text, fontSize, maxW) {
+        ctx.font = `900 ${fontSize}px Impact, Arial Black, sans-serif`;
+        const words = text.toUpperCase().split(' ');
+        const lines = [];
+        let line = '';
+        for (const w of words) {
+          const test = line ? line + ' ' + w : w;
+          if (ctx.measureText(test).width > maxW && line) {
+            lines.push(line);
+            line = w;
+          } else { line = test; }
+        }
+        if (line) lines.push(line);
+        return lines;
+      }
+
+      function drawBlock(text, position) {
+        if (!text) return;
+        let fontSize = 34;
+        let lines = wrapText(text, fontSize, MAX_TEXT_W);
+        while (lines.length > 3 && fontSize > 14) {
+          fontSize -= 2;
+          lines = wrapText(text, fontSize, MAX_TEXT_W);
+        }
+        const lineH  = fontSize * 1.3;
+        const blockH = lines.length * lineH + 24;
+        const blockY = position === 'top' ? 0 : H - blockH;
+
+        const grad = ctx.createLinearGradient(0, blockY, 0, blockY + blockH);
+        if (position === 'top') {
+          grad.addColorStop(0, 'rgba(0,0,0,0.70)');
+          grad.addColorStop(1, 'rgba(0,0,0,0.02)');
+        } else {
+          grad.addColorStop(0, 'rgba(0,0,0,0.02)');
+          grad.addColorStop(1, 'rgba(0,0,0,0.70)');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, blockY, W, blockH);
+
+        ctx.font = `900 ${fontSize}px Impact, Arial Black, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        ctx.shadowBlur  = 5;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        ctx.fillStyle = '#ffffff';
+
+        lines.forEach((line, i) => {
+          ctx.fillText(line, W / 2, blockY + 12 + i * lineH);
+        });
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur  = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }
+
+      drawBlock(topText, 'top');
+      drawBlock(bottomText, 'bottom');
+      document.getElementById('memeResult').style.display = 'block';
+    };
+
+    img.src = 'data:image/jpeg;base64,' + imageBase64;
+  }
+
+  function downloadMeme() {
+    const canvas = document.getElementById('memeCanvas');
+    const a = document.createElement('a');
+    a.download = 'meme-gatto.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  }
+
+  // Registra Service Worker per PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('GattoAI PWA pronta!'))
+        .catch(err => console.log('SW error:', err));
+    });
+  }
+
+  // Banner "Aggiungi alla home" su Android
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'flex';
+  });
+
+  function installPWA() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('installBanner').style.display = 'none';
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('installBanner').style.display = 'none';
+  });
+</script>
+</body>
+</html>
